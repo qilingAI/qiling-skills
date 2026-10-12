@@ -33,7 +33,7 @@
 
 401 刷新请求只提交 `refresh_token`；SDK 刷新返回 `sdk_token` 和同用途 `access_token`，保存当前结果。不要把它们用来调用 `/auth/me` 或 `/developer/products`。账号凭证对应 `/auth/refresh`，SDK 对应 `/sdk/session/refresh`。
 
-旧版 `/sdk/licenses/activate`、`verify`、`devices/{device_id}` 接受客户的平台账号会话，不接受 SDK Bearer。新接入使用授权码登录和校验，不为了设备绑定调用旧接口。
+`/sdk/licenses/activate`、`verify`、`devices/{device_id}` 是当前有效的账号设备接口，分别用于激活、验证和解绑，接受 customer 角色平台账号会话，不接受 SDK Bearer。授权码登录/校验是另一种会话流程，不代表这些设备接口已弃用；已有软件采用账号设备接口时保留原流程与网络层，不擅自改为授权码登录。Python SDK 当前提供授权码流程的封装，不能因此断定平台账号设备接口不可用。
 
 ## Python 用法
 
