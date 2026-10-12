@@ -14,7 +14,13 @@
 
 ## 使用
 
-克隆仓库，将 `skills/qiling-sdk-integrate` 整个文件夹放入你的编程助手支持的 Skills 目录。支持显式调用的助手可以这样请求：
+支持 Skills CLI 的编程助手，可以安装指定 Skill：
+
+```sh
+npx skills add qilingAI/qiling-skills --skill qiling-sdk-integrate
+```
+
+安装时选择需要的助手与项目范围；本命令不是上传、付款或部署授权。也可以手动安装：克隆仓库，将 `skills/qiling-sdk-integrate` 整个文件夹放入你的编程助手支持的 Skills 目录。支持显式调用的助手可以这样请求：
 
 ```text
 使用 $qiling-sdk-integrate 为这个工程接入器灵 SDK。
