@@ -1,0 +1,4 @@
+interface:
+  display_name: "器灵 SDK 接入"
+  short_description: "为现有软件接入器灵授权登录、套餐权益、设备与额度校验，并完成测试"
+  default_prompt: "使用 $qiling-sdk-integrate 为这个软件接入器灵 SDK，先完成测试授权登录和套餐权益校验。"
