@@ -2,7 +2,7 @@
 
 帮助 AI 编程助手为现有软件接入器灵 AI 平台。每个 Skill 是可读取的工作说明与必要参考资料，按 Agent Skills 的 `SKILL.md` 结构组织。
 
-[官网](https://ql.xiazq.com) · [在线开发文档](https://867fas1f7s.apifox.cn/) · [Python SDK](https://github.com/qilingAI/qiling-sdk-python)
+[官网](https://toolsoul.daniu7.cn) · [在线开发文档](https://867fas1f7s.apifox.cn/) · [Python SDK](https://github.com/qilingAI/qiling-sdk-python)
 
 ## 当前 Skill
 
@@ -30,6 +30,8 @@ npx skills add qilingAI/qiling-skills --skill qiling-sdk-integrate
 没有 Skill 自动加载功能时，将 [SKILL.md](skills/qiling-sdk-integrate/SKILL.md) 提供给助手，并让它按其中引用读取接入说明。
 
 ## 准备配置
+
+从项目配置或平台提供的接入信息确认实际 API 根地址（`base_url`）。官网链接用于访问网站，不代表 SDK 的 API 地址；Skill 不预设生产域名，也不要在根地址后附加 `/api/v1`。
 
 在器灵开发者后台保存软件和套餐后，到“我的软件 → 开发调试”生成测试 App Key 和测试授权码。测试 App Key 不是软件英文标识或软件 ID。授权码不要提交到仓库或发送到公共对话；把它放在本地安全输入/存储中。
 
