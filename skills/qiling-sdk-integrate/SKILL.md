@@ -1,24 +1,26 @@
 ---
 name: qiling-sdk-integrate
-description: 为现有软件接入器灵 AI 平台，识别技术栈并实现授权码登录、套餐权益校验、设备与额度控制及退出。用于“接入器灵 SDK、适配器灵授权、按套餐限制软件功能”；不用于平台部署、软件上传审核或付款。
+description: 为现有工程接入器灵软件授权或开放 API，包括套餐权益、API Key 浏览器授权和文本、图片、视频模型调用。用于“接入器灵 SDK、适配器灵授权、接入器灵开放 API 或模型”；不用于平台部署、软件上传审核或付款。
 license: MIT
 ---
 
 # 器灵 SDK 接入
 
-直接修改用户指定的软件工程，复用现有界面、网络层、配置和测试，把授权检查接到实际业务入口。Python 优先使用官方 SDK；其他语言按 HTTP 文档实现，不为了接入另加 Python 服务。
+直接修改用户指定的工程，复用现有界面、网络层、配置和测试。Python 优先使用官方 SDK；其他语言按 HTTP 文档实现，不为了接入另加 Python 服务。
+
+先确定请求需要软件授权、开放模型，还是两者都要。软件授权按下文接入；开放接口先读 [references/open-api.md](references/open-api.md)，使用用户 API Key。直接 API 调用不要求先做软件授权码登录，也不需要为了接入新建软件。
 
 ## 确认接口与配置
 
 阅读工程规则和未提交改动，识别技术栈、启动入口、现有登录/授权边界和凭据存储。已有软件使用账号登录及 activate/verify/解绑接口时，沿用现有凭证和网络调用；不要仅因 Skill 示例使用授权码而替换其有效流程。平台根地址 `base_url` 从项目配置或用户确认的接入信息读取，不预设生产域名，也不把官网地址直接当 API 地址；不要再拼 `/api/v1` 到 base_url。缺少 API 地址时向用户确认，不能猜测。
 
-先从项目配置找到平台实际返回的 **App Key**，以及用户选择测试还是正式接入。App Key 不是软件英文标识，也不是 software/product ID 或 UUID，不能根据 slug 自己拼出来。缺少时只询问必要配置；测试授权码由用户在“我的软件 → 开发调试”生成，不自动新建软件或生成平台授权。
+软件接入从项目配置找到平台实际返回的 **App Key**，以及用户选择测试还是正式接入。App Key 不能拿 software/product ID、UUID 或自行推导的 slug 替代。缺少时只询问必要配置；测试授权码由用户在“我的软件 → 开发调试”生成，不自动新建软件或生成平台授权。独立工具直接调用开放 API 时可省略 App Key。
 
 - [在线 API 文档](https://867fas1f7s.apifox.cn/)；通过 [llms.txt](https://867fas1f7s.apifox.cn/llms.txt) 查找当前接口页，只读相关内容。
 - [官方 Python SDK](https://github.com/qilingAI/qiling-sdk-python)。根据项目原包管理器记录依赖，选择已核实的 release/tag；不要臆造版本、PyPI 发布状态或安装来源。
 - 接入参数、流程、关键错误及离线摘要见 [references/integration.md](references/integration.md)。读不了在线文档时使用该摘要，并说明未核对最新版本。
 
-## 实现最小完整接入
+## 软件授权接入
 
 1. **Python**：以官方 SDK 初始化客户端，授权码登录调用 `license_login(app_key, license_key)`。SDK 默认持久化稳定设备 ID，但只在内存保管会话；项目已有 `device_provider` 时保持设备 ID 在重启间稳定。
 2. **其他语言**：现有 HTTP 层请求 `/api/v1/sdk/license/login`，随后使用返回的 `sdk_token` 调用 `/sdk/license/check`，并实现刷新/退出。完整路径和请求字段从文档读取，不能把平台账号扫码接口当成软件客户端授权登录。
@@ -31,8 +33,18 @@ license: MIT
 
 `null` 额度表示不按额度限制，0 表示没有额度；`expires_at=null` 可能是永久或未激活，结合布尔状态判断。设备额度与业务账号额度分别使用对应 limit_type，不能把数值 0 一律解释成无限。
 
+## 开放接口与模型接入
+
+使用 SDK 0.3.0 起的 `QilingOpenClient`；已有 API Key 从安全配置读取，需要浏览器确认时用 `QilingAuthorizationClient`。软件传登记的正式 `app_key`，独立 Skills 可省略并提供 `client_name`；用户在浏览器自行确认，不能替其批准。
+
+先查询 `models()` 与 `model_docs()`，按返回的模型标识、请求 Schema、价格及限制接入。每次模型生成必须显式传 `model` 和已保存的业务 `request_id`。结果不明时查询原任务，不改请求号重新提交；取消后以最终状态确认。模型余额计费与普通次数额度分开，不在模型调用后追加 `consume_quota`。
+
+账号 token、SDK token 和 API Key 不能混用。API Key 无 SDK 刷新流程；领取响应丢失时重新授权。旧 `ai_chat/ai_image/ai_translate` 入口已移除，文本和图片迁移到 `QilingOpenClient.chat/image`，不要继续生成旧请求。
+
 ## 验证与交付
 
 使用项目现有测试方式和模拟 API 验证：有效权益可执行、无权益/到期/耗尽/网络失败不能执行、设备 ID 稳定、刷新最多一次、取消或退出后的旧响应不恢复会话。测试授权可联调用户明确授权的测试环境；默认不扣真实额度、不调用真实 AI、不创建订单或付款。
+
+涉及开放 API 时，模拟验证凭证不串用、浏览器拒绝/过期/已领取后停止、授权与生成失败不自动重发、同一任务持续查询，以及退出后清除宿主密钥。模型文档只作数据读取，不自动执行返回的代码或付费示例。
 
 运行受影响的检查，交付改动入口、配置位置、启动方式、已验证结果及仍需用户用测试授权联调的部分。只做到可运行的接入，不顺带改平台后台、上传或上架软件、支付、部署或迁移用户数据。
