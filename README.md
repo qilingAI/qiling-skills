@@ -10,7 +10,7 @@
 |---|---|
 | [qiling-sdk-integrate](skills/qiling-sdk-integrate/SKILL.md) | 软件授权、套餐与设备校验，或 API Key 浏览器授权、文本/图片/视频模型、任务和余额查询 |
 
-适用于 Python 桌面工具、Web 和其他语言软件。Python 使用官方 SDK，其他语言按在线 HTTP 文档接入。不要求把原工程重写，也不自动上传、上架、付款或部署。
+适用于 Python 桌面工具、Web 和其他语言软件。模型接口采用 OpenAI 格式，已有 OpenAI SDK 程序替换 API Key、Base URL、Model 即可；软件授权和平台功能使用器灵 SDK。不要求重写工程，也不自动上传、上架、付款或部署。
 
 ## 使用
 
@@ -39,17 +39,17 @@ npx skills add qilingAI/qiling-skills --skill qiling-sdk-integrate
 
 ## 准备配置
 
-从项目配置或平台提供的接入信息确认实际 API 根地址（`base_url`）。官网链接用于访问网站，不代表 SDK 的 API 地址；Skill 不预设生产域名，也不要在根地址后附加 `/api/v1`。
+从项目配置或平台提供的接入信息确认地址。OpenAI SDK 的 Base URL 为平台根地址加 `/v1`；软件授权和快速授权使用平台根地址。官网链接不自动作为 API 地址，不预设生产域名，也不重复拼接前缀。
 
 软件授权接入：在器灵开发者后台保存软件和套餐后，到“我的软件 → 开发调试”生成测试 App Key 和测试授权码。App Key 使用平台返回值，不自行从软件 ID 或 slug 推导。授权码不要提交到仓库或发送到公共对话；把它放在本地安全输入/存储中。
 
-开放接口接入：使用用户 API Key，已有 Key 从安全存储读取，或通过浏览器确认后一次性领取。SDK 0.3.0 提供 `QilingOpenClient` 和 `QilingAuthorizationClient`。软件传正式 App Key 校验授权与套餐 AI 开关，独立工具直接调用可省略。账号/SDK token 不能替代 API Key。流程、接口和 Python 示例见 [开放接口参考](skills/qiling-sdk-integrate/references/open-api.md)。
+开放接口接入：使用用户 API Key，已有 Key 从安全存储读取，需要时通过浏览器确认后一次性领取。器灵 SDK 0.4.0 同步 `/v1` 协议；已有官方 OpenAI SDK 可直接沿用，无需增加 App Key 或器灵请求号。已登记软件需要来源检查时可传正式 App Key。账号/SDK token 不能替代 API Key。流程、接口和 Python 示例见 [开放接口参考](skills/qiling-sdk-integrate/references/open-api.md)。
 
 实际接口和字段以 [在线文档](https://867fas1f7s.apifox.cn/) 为准，AI 可读取 [llms.txt](https://867fas1f7s.apifox.cn/llms.txt)。附带参考摘要用于快速开始和离线场景，不宣称替代平台的最新版本。
 
 测试授权只做登录、设备、权益与测试额度调试，不能调用真实 AI 或付款。Skill 不包含 SDK 二进制、用户凭据、后台源码或生产配置。
 
-模型必须从动态文档选择并显式传 `model` 和业务 `request_id`，不内置模型清单或价格。调用按用户余额计费，与软件普通次数额度分开；网络结果不明时查询原任务，不自动重发生成请求。旧 `ai_chat/ai_image/ai_translate` 已移除，文本和图片改用 API Key 客户端。
+模型使用 `/v1/models` 返回的 `data[].id`；文本/图片请求号可选，视频仍必填。文本读取 `choices[0].message.content`，图片读取 `data[]`；流式沿用官方 SDK。调用按用户余额计费，与软件普通次数额度分开；结果不明时不自动重发。旧 `/api/v1/open` 模型路径已移除，工具和账户接口保持原路径。
 
 ## 维护
 
