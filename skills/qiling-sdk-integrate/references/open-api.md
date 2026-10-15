@@ -66,6 +66,12 @@ call_id = result["id"]
 
 工具提交请求只有 endpoint、input、options；不要添加模型字段。视频使用专属 videos 接口。图片支持 n、size、reference_images、layer_decomposition；视频支持 duration、resolution、reference_images、reference_video、reference_seconds；具体范围和能力按当前模型文档。参考素材为公开 HTTPS URL。
 
+### 去 AI 正文与换行
+
+去 AI 的段落边界会影响上游改文效果。`remove_ai(text)` 的 `text`，以及 `submit_task("remove_ai", input=...)` 的 `input`，都应原样传递用户正文，保留真实换行、空行、缩进和首尾空白。粘贴的多行文章保存为多行 UTF-8 文件，不用空格拼接段落、空白正则或 `strip()` 清洗正文。文件可用 `Path(path).read_bytes().decode("utf-8-sig")` 读取，保留原始换行格式。
+
+JSON 编码会负责表示换行，服务端解码后仍是真实换行。不要先把换行替换成反斜杠加字母 n 的文本，或手动编码两次。长文按接口字符上限分段时，按顺序拼接各段应与输入正文逐字符一致；提交前核对实际换行数量，原文有多行而提取结果为一行时先修复输入。接口返回的改文也保留段落结构。测试应检查真实 HTTP JSON 解码后的正文与原文完全一致。
+
 ## 计费、任务与迁移
 
 - 模型共享用户调用余额，与普通软件次数额度独立；不在模型调用后追加 consume_quota，不套用工具按次优惠。余额不包含推广可提现收益，logs/usage 限当前 API Key。
