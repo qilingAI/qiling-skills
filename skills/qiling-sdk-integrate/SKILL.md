@@ -35,13 +35,13 @@ license: MIT
 
 ## 开放接口与模型接入
 
-文本、图片生成和模型目录使用 OpenAI 格式。优先保留现有官方 OpenAI SDK 调用，只替换 API Key、含 `/v1` 的 Base URL 和 Model；不要求 App Key、授权码或自定义请求号。器灵客户端使用 0.4.0 起的 `QilingOpenClient`。需要浏览器领取 Key 时再用 `QilingAuthorizationClient`；已登记软件需要来源检查时传正式 `app_key`，独立 Skills 可省略。用户在浏览器自行确认，不能替其批准。
+文本、图片生成和模型目录使用 OpenAI 格式。优先保留现有官方 OpenAI SDK 调用，只替换 API Key、含 `/v1` 的 Base URL 和 Model；不要求 App Key、授权码或自定义请求号。器灵客户端使用 0.5.1 的 `QilingOpenClient`。需要浏览器领取 Key 时再用 `QilingAuthorizationClient`；已登记软件需要来源检查时传正式 `app_key`，独立 Skills 可省略。用户在浏览器自行确认，不能替其批准。
 
 模型目录读取 `GET /v1/models` 的 `data[].id`，价格及能力在 `qiling.config`；动态完整文档仍为 `/api/v1/open/model-docs`。文本正文读 `choices[0].message.content`，图片读 `data[]`；平台调用 ID/费用读 `qiling.id/billing`。流式使用官方 SDK 的 `stream=True` 和 delta，不拿 SSE 当整段 JSON。
 
-model 必填；文本/图片的 `request_id` 或 `Idempotency-Key` 可选，不再强制增加参数。需要业务重试时保存并复用原号，默认关闭生成请求自动重试，结果不明时查询原任务。视频仍是器灵 JSON 扩展，request_id 必填，不当作官方 Videos 文件上传协议。模型余额计费与普通次数额度分开，不追加 `consume_quota`。
+model 必填；开放文本、图片、视频的 `request_id` 或 `Idempotency-Key` 可选，省略时由平台生成。需要业务重试时保存并复用原号，默认关闭生成请求自动重试，结果不明时查询原任务。视频仍是器灵 JSON 扩展，不当作官方 Videos 文件上传协议；SDK Bearer 的 ai_video 仍必填 request_id。模型余额计费与普通次数额度分开，不追加 `consume_quota`。
 
-账号 token、SDK token 和 API Key 不能混用。API Key 无 SDK 刷新流程；领取响应丢失时重新授权。旧 `/api/v1/open` 模型路径与 `ai_chat/ai_image/ai_translate` 已移除；工具、余额和快速授权路径不变。兼容范围以 Apifox 为准，不臆造 Responses、tools、结构化输出或多模态输入；错误按标准 error 对象处理。
+账号 token、SDK token 和 API Key 不能混用。API Key 无 SDK 刷新流程；领取响应丢失时重新授权。旧 `/api/v1/open` 模型路径与 `ai_chat/ai_image/ai_translate` 已移除；工具、余额和快速授权路径不变。最新文档已开放函数工具/并行工具、工具结果续接、JSON 结构化输出、多模态消息及图片编辑/流式，按所选模型能力开关校验；Responses 尚未开放。详细流程读 [references/model-capabilities.md](references/model-capabilities.md)，错误按标准 error 对象处理。
 
 ## 验证与交付
 
