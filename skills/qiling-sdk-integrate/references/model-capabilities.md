@@ -1,6 +1,14 @@
 # 模型新能力
 
-核对日期：2026-10-15。接入前通过 [Apifox 索引](https://867fas1f7s.apifox.cn/llms.txt) 及已确认平台根地址下的 `/api/v1/open/model-docs` 读取当前 Schema。字段开放不代表每个模型均支持；以所选模型的后台能力开关、参数范围及供应商支持为准。
+核对日期：2026-10-17。接入前通过 [Apifox 索引](https://867fas1f7s.apifox.cn/llms.txt) 及已确认平台根地址下的 `/api/v1/open/model-docs` 读取当前 Schema。字段开放不代表每个模型均支持；以所选模型的后台能力开关、参数范围及供应商支持为准。
+
+## 思考模式
+
+刷新模型目录与动态文档缓存。模型 data[].qiling.config 的 supports_thinking、thinking_modes 明确支持与可选模式，支持时 capabilities 含 thinking；request_schema.properties.thinking 描述实际可传值。后台显式关闭优先，不靠别名或旧缓存判断支持；未知模型不默认宣称可切换。
+
+仅在能力声明允许时提供 enabled/disabled 选择，并持久化用户设置。没有用户选择且模型支持 disabled 时可显式关闭；不传 thinking 使用供应商默认，不能将省略等同于关闭。器灵 chat 传 thinking={type: disabled}；官方 OpenAI SDK 用 extra_body={thinking: {type: disabled}}，最终 HTTP JSON 是顶层 thinking。reasoning_effort 不能代替开关。
+
+保留 reasoning_content 与最终 content 的区别：普通返回、流式 delta、原任务查询、工具续接和幂等重放都不能丢弃思考字段；不把思考内容当最终答案，不默认写入普通日志。
 
 ## 工具与结构化输出
 
@@ -38,7 +46,7 @@ with gateway.openai() as client, open(user_image_path, "rb") as source:
 
 ## 视频素材与结果
 
-`POST /v1/videos` 使用器灵 JSON 异步协议；SDK 0.5.1 的 `video` 支持：
+`POST /v1/videos` 使用器灵 JSON 异步协议；SDK 0.5.2 的 `video` 支持：
 
 - content：官方素材块 text/image_url/video_url/audio_url；图片 role 为 first_frame/last_frame/reference_image，参考音频使用对应 reference_audio 角色。
 - 便捷参数：prompt、reference_images、reference_video、reference_audios、first_frame、last_frame；与 content 二选一，不混用。首尾帧与全模态参考不能混用，last_frame 需要 first_frame。
@@ -59,6 +67,8 @@ current = gateway.model_call(task["id"])
 
 视频参考素材支持文档允许的 HTTPS/Data URI，实际数量、时长和分辨率由模型限制。开放视频 request_id 可省略或用 Idempotency-Key；业务重试复用原号，不生成新任务。SDK Bearer 的 `ai_video` 仍要求 app_key/request_id，SDK 从已有授权补入 app_key，接受相同的新素材参数。
 
-成功读取 data.video_url；请求 return_last_frame 且上游返回时读取 data.last_frame_url。模型任务查询/取消仍用 model_call/cancel_video，SDK Bearer 则用 ai_task/ai_cancel_video。reference_seconds 是预算输入，客户端不能用它降低平台冻结上界，最终按可信实际用量结算。断流、用量缺失、unknown/review 只查询或核对原任务，不新建生成请求。
+成功读取 data.video_url；请求 return_last_frame 且上游返回时读取 data.last_frame_url。模型任务查询/取消仍用 model_call/cancel_video，SDK Bearer 则用 ai_task/ai_cancel_video。reference_seconds 仅用于费用估算，不预扣或占用余额，最终按可信实际用量结算。断流、用量缺失、unknown/review 只查询或核对原任务，不新建生成请求。
 
-验证使用模拟请求：工具结果与 reasoning_content 完整回传、消息内容块未改写、JSON Schema 选项透传、multipart 字节不变、图片事件正确读取、视频素材互斥及可选值保留。仅为接入不自动执行真实工具或付费生成。
+软件使用权与 AI 付费可以归不同账号，Key 账号的余额/日志与软件会话分开保存。提交模型请求只检查余额大于 0；按实际费用结算可出现负余额，此时停止新请求，充值先抵欠款。估价不占用余额，用量缺失或结果未知等待核对，不当作免费成功。
+
+验证使用模拟请求：思考 enabled/disabled 及省略语义、模型能力元数据保留、软件与 AI 账号凭证独立、负余额与估价透传，工具结果与 reasoning_content 完整回传、消息内容块未改写、JSON Schema 选项透传、multipart 字节不变、图片事件正确读取、视频素材互斥及可选值保留。仅为接入不自动执行真实工具或付费生成。
