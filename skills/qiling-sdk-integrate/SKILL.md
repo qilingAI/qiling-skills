@@ -35,7 +35,7 @@ license: MIT
 
 ## 开放接口与模型接入
 
-文本、图片生成和模型目录使用 OpenAI 格式。优先保留现有官方 OpenAI SDK 调用，只替换 API Key、含 `/v1` 的 Base URL 和 Model；不要求 App Key、授权码或自定义请求号。器灵客户端使用 0.5.2 的 `QilingOpenClient`。需要浏览器领取 Key 时再用 `QilingAuthorizationClient`；已登记软件需要来源检查时传正式 `app_key`，独立 Skills 可省略。用户在浏览器自行确认，不能替其批准。
+文本、图片生成和模型目录使用 OpenAI 格式。优先保留现有官方 OpenAI SDK 调用，只替换 API Key、含 `/v1` 的 Base URL 和 Model；不要求 App Key、授权码或自定义请求号。器灵客户端使用 0.5.3。需要浏览器领取 Key 时用 `QilingAuthorizationClient`；已登记软件传正式 app_key，从原软件授权响应的 site.code 取得可选 site_code，保留分站确认页。只打开服务端 verification_url，不拼域名、不因分站改变 API 地址；404/409 不自动回退主站。独立 Skills 可省略 app_key/site_code。用户在浏览器自行确认，不能替其批准。
 
 模型目录读取 `GET /v1/models` 的 `data[].id`，价格及能力在 `qiling.config`；动态完整文档仍为 `/api/v1/open/model-docs`。文本正文读 `choices[0].message.content`，图片读 `data[]`；平台调用 ID/费用读 `qiling.id/billing`。流式使用官方 SDK 的 `stream=True` 和 delta，不拿 SSE 当整段 JSON。
 
