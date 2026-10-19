@@ -43,7 +43,7 @@ npx skills add qilingAI/qiling-skills --skill qiling-sdk-integrate
 
 软件授权接入：在器灵开发者后台保存软件和套餐后，到“我的软件 → 开发调试”生成测试 App Key 和测试授权码。App Key 使用平台返回值，不自行从软件 ID 或 slug 推导。授权码不要提交到仓库或发送到公共对话；把它放在本地安全输入/存储中。
 
-开放接口接入：使用用户 API Key，已有 Key 从安全存储读取，需要时通过浏览器确认后一次性领取。器灵 SDK 0.5.3 支持分站授权来源；已有官方 OpenAI SDK 可直接沿用，无需增加 App Key 或器灵请求号。已登记软件需要来源检查时可传正式 App Key。账号/SDK token 不能替代 API Key。流程、接口和 Python 示例见 [开放接口参考](skills/qiling-sdk-integrate/references/open-api.md)。
+开放接口接入：使用用户 API Key，已有 Key 从安全存储读取，需要时通过浏览器确认后一次性领取。器灵 SDK 0.5.4 支持分站授权来源；已有官方 OpenAI SDK 可直接沿用，无需增加 App Key 或器灵请求号。已登记软件需要来源检查时可传正式 App Key。账号/SDK token 不能替代 API Key。流程、接口和 Python 示例见 [开放接口参考](skills/qiling-sdk-integrate/references/open-api.md)。
 
 实际接口和字段以 [在线文档](https://867fas1f7s.apifox.cn/) 为准，AI 可读取 [llms.txt](https://867fas1f7s.apifox.cn/llms.txt)。附带参考摘要用于快速开始和离线场景，不宣称替代平台的最新版本。
 
@@ -56,6 +56,8 @@ npx skills add qilingAI/qiling-skills --skill qiling-sdk-integrate
 新增思考模式能力声明：读取 supports_thinking/thinking_modes 和动态请求 Schema 后提供开关；不传 thinking 仍可能采用上游默认思考。软件登录与 AI 付费账号可以不同，AI 费用及记录归 API Key 账号。当前模型调用不预扣或冻结余额，按可信实际用量结算，余额可为负；充值先抵欠款。
 
 分站软件浏览器授权时传原软件会话 site.code 作为 site_code，只打开服务端 verification_url。确认页品牌可来自分站，API 地址和 AI 付费账号独立；404/409 不自动改走主站。省略或 platform 保持主站流程，不预设分站域名。
+
+SDK 0.5.4 的登录/校验响应新增 product.ai_quick_authorization_enabled，按软件授权所属站点控制 AI 快捷授权入口。显式 false 隐藏，旧平台缺失字段才默认 true；不撤销已有 Key，也不替代套餐 AI 能力或实际调用权限。
 
 ## 维护
 

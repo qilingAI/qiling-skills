@@ -1,6 +1,6 @@
 # 接入事实与接口速查
 
-核对日期：2026-10-15。平台公开 OpenAPI 与 Apifox 以当前服务版本为准。本摘要面向软件客户端授权；开放接口、API Key 和模型调用见 [open-api.md](open-api.md)。不包含管理账号创建软件或操作支付的权限。
+核对日期：2026-10-19。平台公开 OpenAPI 与 Apifox 以当前服务版本为准。本摘要面向软件客户端授权；开放接口、API Key 和模型调用见 [open-api.md](open-api.md)。不包含管理账号创建软件或操作支付的权限。
 
 ## 官方来源
 
@@ -35,6 +35,20 @@
 401 刷新请求只提交 `refresh_token`；SDK 刷新返回 `sdk_token` 和同用途 `access_token`，保存当前结果。不要把它们用来调用 `/auth/me` 或 `/developer/products`。账号凭证对应 `/auth/refresh`，SDK 对应 `/sdk/session/refresh`。
 
 `/sdk/licenses/activate`、`verify`、`devices/{device_id}` 是当前有效的账号设备接口，分别用于激活、验证和解绑，接受 customer 角色平台账号会话，不接受 SDK Bearer。授权码登录/校验是另一种会话流程，不代表这些设备接口已弃用；已有软件采用账号设备接口时保留原流程与网络层，不擅自改为授权码登录。Python SDK 当前提供授权码流程的封装，不能因此断定平台账号设备接口不可用。
+
+## AI 快捷授权入口
+
+SDK 0.5.4 保留登录和校验响应的 `product.ai_quick_authorization_enabled`，是 JSON 布尔值，默认 true。它是授权所属站点下的软件配置，主站、各分站独立，基础分站也适用；管理员赠送试用、多模块及开发测试授权均使用此返回位置。后台修改后，下次登录/校验读取新值。
+
+```python
+checked = client.license_check(app_key)
+show_ai_quick_auth = checked.get("product", {}).get("ai_quick_authorization_enabled", True)
+# 宿主更新现有快捷授权入口的可见状态，显式 False 必须保留。
+```
+
+TypeScript 采用 `session.product.ai_quick_authorization_enabled ?? true`。不要用 Python `value or True`、JavaScript `value || true`，否则后台关闭会被覆盖。仅字段缺失时兼容旧平台默认开启；不要从套餐 ai_enabled 推导这个入口开关。
+
+此开关只控制客户端快捷授权入口，不是安全权限，不撤销已授权 Key，不替代软件授权有效性、套餐 AI 能力或实际模型调用校验；不因此清空用户 Key、封禁其他 AI 入口或新建查询接口。独立 API/Skills 无软件会话时无需为了查询它新建软件登录。
 
 ## Python 用法
 

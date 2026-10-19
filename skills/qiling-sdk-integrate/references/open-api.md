@@ -1,16 +1,18 @@
 # 开放接口、API Key 与模型
 
-核对日期：2026-10-17。来源为 [公开文档索引](https://867fas1f7s.apifox.cn/llms.txt)。从索引读取当前接口页，不猜发布 ID。API 根地址由接入配置指定，官网不自动作为 API 地址。
+核对日期：2026-10-19。来源为 [公开文档索引](https://867fas1f7s.apifox.cn/llms.txt)。从索引读取当前接口页，不猜发布 ID。API 根地址由接入配置指定，官网不自动作为 API 地址。
 
 ## 选择凭证
 
 - `QilingAiClient` 使用授权码登录取得 SDK token，负责软件权益、设备、普通次数和续费。
-- 官方 OpenAI SDK 使用用户 API Key，模型接口采用标准 Bearer 鉴权；器灵 `QilingOpenClient` 0.5.3 同步 `/v1` 模型协议，工具/账户接口仍使用 x-api-key。SDK/账号 JWT 不能代替 API Key。
+- 官方 OpenAI SDK 使用用户 API Key，模型接口采用标准 Bearer 鉴权；器灵 `QilingOpenClient` 0.5.4 同步 `/v1` 模型协议，工具/账户接口仍使用 x-api-key。SDK/账号 JWT 不能代替 API Key。
 - 普通模型调用只需要 API Key、Base URL 和 Model，不要求 App Key 或授权码。已登记软件需要来源检查时传 x-qiling-app-key，服务端检查软件启用、上架状态与 AI 套餐配置；不要求 Key 账号拥有软件授权。App Key 使用平台登记值。
 
 Key 是通用用户凭证，可以访问启用的模型和工具，并消耗用户调用余额。多个应用可能共用同一默认 Key，重置/停用会影响所有接入应用。App Key 用于软件能力检查，不是拿到完整 Key 后不可移除的隔离边界；不要为绕过拒绝响应删除软件来源头。
 
 软件登录账号与 AI 授权账号独立：A 的软件 SDK 会话继续校验使用权，B 在浏览器确认后提供 B 的 API Key，AI 费用、余额和记录归 B。切换 AI Key 不切换或覆盖软件会话。不要自行要求两者同账号，也不因 AI Key 有效而绕过软件权益。测试 App Key 不支持正式 AI，正式软件无可用 AI 配置或已关闭时仍拒绝。
+
+软件展示快捷授权入口前，从最新登录/校验响应读取 product.ai_quick_authorization_enabled；false 隐藏，字段缺失才默认 true。开关按原软件授权所属站点设置，切换账号或重新校验后更新，不能用 AI 付费账号站点推导。它不影响已授权 Key 或模型权限，不需要另查接口，详细默认值见 [integration.md](integration.md#ai-快捷授权入口)。
 
 ## 浏览器快速授权
 
@@ -19,7 +21,7 @@ Key 是通用用户凭证，可以访问启用的模型和工具，并消耗用�
 3. `POST /api/v1/auth/api-key/token`，JSON 请求体为 `{"device_code": "应用持有的轮询凭证"}`。按 interval（至少 3 秒）查询，最长 expires_in（默认 600 秒）。pending 等待；denied、consumed 或过期停止；HTTP 410 过期，429 放慢轮询。
 4. authorized 仅首次返回 `api_key`、`app_key`、`base_url` 和模型/文档 URL。响应丢失需重新授权，不自动重复领取。API Key 存系统凭据库或受保护存储；不提交 Git，不放公共前端配置。不要根据返回 URL 自动更换凭证请求的目标站点。
 
-Python SDK 0.5.3 起可保留分站来源：
+Python SDK 0.5.4 起可保留分站来源：
 
 ```python
 from qiling_ai_sdk import QilingAuthorizationClient
@@ -71,7 +73,7 @@ text = result.choices[0].message.content
 
 ## 器灵客户端与路径
 
-`QilingOpenClient` 0.5.3 接受平台根地址或含 `/v1` 的模型 Base URL；普通 chat/image 返回标准 JSON，不再返回旧 data 包装。平台调用 id 位于 result["qiling"]["id"]，费用在 qiling.billing；文本是 choices[0].message.content，图片为 data[]。流式使用官方 OpenAI SDK，器灵客户端的 chat 不读取 SSE。
+`QilingOpenClient` 0.5.4 接受平台根地址或含 `/v1` 的模型 Base URL；普通 chat/image 返回标准 JSON，不再返回旧 data 包装。平台调用 id 位于 result["qiling"]["id"]，费用在 qiling.billing；文本是 choices[0].message.content，图片为 data[]。流式使用官方 OpenAI SDK，器灵客户端的 chat 不读取 SSE。
 
 | 功能 | 当前完整路径 | 用法 |
 |---|---|---|
@@ -104,6 +106,6 @@ JSON 编码会负责表示换行，服务端解码后仍是真实换行。不要
 - estimate 接收 kind=text/image/video 和对应完整请求，只做最大费用估算，不调用上游或冻结余额。生成提交时只要求余额大于 0，不预扣、冻结或占用余额；完成后按可信真实用量和请求价格快照结算，可使余额为负。余额小于等于 0 时停止新调用，充值先抵欠款。不要用估价做客户端预冻结，也不把 estimated_fee 当最终扣费。用户报价已含倍率，不再乘一次；费用保留十进制字符串，计算时用 Decimal。
 - 视频仅 succeeded 为完成，queued/running/cancel_requested 查询同一平台 id；unknown/review 或用量缺失等待核对。文本/图片扩展费用位于 qiling.billing，视频位于顶层 billing；fee=null 不表示免费。流式错误或未完成不能假定结算成功。
 - 模型错误是标准 error 对象，包含 message/type/param/code，器灵 SDK 在 QilingAiError.detail 保留该对象；HTTP 400 参数不支持、401 Key 无效、402 余额不足、403 权限限制、409 冲突或待核对。网络结果不明不自动重发，保存可用的 qiling.id 或错误中 call_id/request_id；取消接受不代表最终取消或退款。
-- 旧 QilingAiClient.ai_chat/ai_image/ai_translate 已移除，文本和图片迁移到官方 OpenAI SDK 或 QilingOpenClient 0.5.3 的 chat/image；翻译可使用当前文本模型。SDK Bearer 仍保留 ai_models、ai_estimate、ai_video、ai_task、ai_cancel_video、ai_bills；SDK Bearer 视频请求 model 和 request_id 必填，app_key 来自已校验的软件授权；支持与开放视频相同的新素材和音频选项。
+- 旧 QilingAiClient.ai_chat/ai_image/ai_translate 已移除，文本和图片迁移到官方 OpenAI SDK 或 QilingOpenClient 0.5.4 的 chat/image；翻译可使用当前文本模型。SDK Bearer 仍保留 ai_models、ai_estimate、ai_video、ai_task、ai_cancel_video、ai_bills；SDK Bearer 视频请求 model 和 request_id 必填，app_key 来自已校验的软件授权；支持与开放视频相同的新素材和音频选项。
 
 默认以模拟 API 测试鉴权分离、授权终止、稳定请求号和原任务查询。测试授权不能调用真实模型；仅为接入或查文档不自动发起付费生成、充值或购买。
