@@ -59,6 +59,8 @@ npx skills add qilingAI/qiling-skills --skill qiling-sdk-integrate
 
 SDK 0.5.4 的登录/校验响应新增 product.ai_quick_authorization_enabled，按软件授权所属站点控制 AI 快捷授权入口。显式 false 隐藏，旧平台缺失字段才默认 true；不撤销已有 Key，也不替代套餐 AI 能力或实际调用权限。
 
+软件详情现支持 HTML 富文本并兼容历史 Markdown；接入时保留内容，复用安全展示方式。开发者资料、素材上传及赠送 AI 金额预估属于软件管理能力，不等同于客户端授权、设备额度或钱包到账，详见 [接入参考](skills/qiling-sdk-integrate/references/integration.md#软件详情与展示资料)。模型调用协议与 SDK 0.5.4 的现有路径保持不变。
+
 ## 维护
 
 修改 Skill 时保持它与当前平台 API 一致，核对参考链接与安装来源。使用模拟服务验证未授权拒绝、设备 ID、会话刷新和退出，不为验证创建真实订单或消耗正式权益。

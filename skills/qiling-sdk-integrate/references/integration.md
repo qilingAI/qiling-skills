@@ -1,6 +1,6 @@
 # 接入事实与接口速查
 
-核对日期：2026-10-19。平台公开 OpenAPI 与 Apifox 以当前服务版本为准。本摘要面向软件客户端授权；开放接口、API Key 和模型调用见 [open-api.md](open-api.md)。不包含管理账号创建软件或操作支付的权限。
+核对日期：2026-10-21。平台公开 OpenAPI 与 Apifox 以当前服务版本为准。本摘要面向软件客户端授权；开放接口、API Key 和模型调用见 [open-api.md](open-api.md)。不包含管理账号创建软件或操作支付的权限。
 
 ## 官方来源
 
@@ -86,6 +86,16 @@ remaining = result["remaining"]
 ```
 
 服务端扣减是事务性的，409 表示本次未成功。如何处理业务失败或防止重复消费依业务上下文决定，平台此接口没有可供客户端编造的幂等字段；不要在不确定请求是否成功时自动重复扣减。
+
+## 软件详情与展示资料
+
+登录/校验、bootstrap 和商品目录返回的 product.detail_content 可为富文本 HTML，也可能是历史 Markdown、空值或空文本。SDK 保留服务端内容，不做 HTML/Markdown 转换；宿主复用已有安全渲染方式，不在展示前合并换行或去掉全部标签。不能运行脚本、事件或嵌入页面。不内嵌展示时可打开服务端 detail_url/product_url，缺少详情不影响有效授权。
+
+公开开发者文档新增 tags、supported_devices、features_content、faqs、file_size、language、release_date、changelog 等软件资料字段，适用于管理软件和网站详情展示；不能假设它们必然出现在每种 SDK 响应，也不为授权接入补造空值。支持设备/系统名称不等于套餐 device_limit，文件大小展示文本不作下载文件完整性校验。
+
+开发者素材上传 `/api/v1/developer/uploads/product-media` 为 multipart 的 file 字段，返回公开 URL；当前图片 PNG/JPEG/WebP 最多 10MB，MP4 最多 20MB。它不是用户模型素材的通用上传接口。软件管理富文本中的内嵌 data: 媒体需按当前管理文档先上传再保存，不能借此给软件运行端安装开发者密钥。上传/上架仍在本 Skill 的默认范围外。
+
+开发者套餐 gift_ai_balance 是赠送 AI 金额配置；`/api/v1/developer/settlement-preview` 仅预估收益和可赠送金额，不写订单、钱包或收益。授权接入不得根据配置、预估 valid 或套餐宣传自行增加用户余额，也不触发充值、购买或结算；实际模型钱包仍通过用户 Key 的 balance 查询。管理接口扩展不改变 SDK/账号/API Key 各自用途。
 
 ## 权益判断
 

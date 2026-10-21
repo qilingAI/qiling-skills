@@ -35,6 +35,8 @@ license: MIT
 
 软件的 AI 快捷授权入口读取登录/校验响应 `product.ai_quick_authorization_enabled`；显式 false 隐藏入口，旧平台缺失字段才默认 true，不用 `value or True` 或 `value || true`。每次登录或校验成功后更新界面，开关按授权所属站点生效，不新增独立查询接口。入口开关不替代软件权益、套餐 AI 能力和实际调用权限，也不撤销已有 Key；独立 Skills 调用不强制补做软件登录。
 
+需要展示软件资料时，`product.detail_content` 按富文本 HTML 或历史 Markdown 处理，保留原文并复用宿主安全渲染，不执行脚本或事件；也可打开服务端详情链接。设备支持文案不当作设备授权额度，赠送 AI 金额配置/预估不当作已到账余额。接入说明见 [references/integration.md](references/integration.md#软件详情与展示资料)。
+
 ## 开放接口与模型接入
 
 文本、图片生成和模型目录使用 OpenAI 格式。优先保留现有官方 OpenAI SDK 调用，只替换 API Key、含 `/v1` 的 Base URL 和 Model；不要求 App Key、授权码或自定义请求号。器灵客户端使用 0.5.4。需要浏览器领取 Key 时用 `QilingAuthorizationClient`；已登记软件传正式 app_key，从原软件授权响应的 site.code 取得可选 site_code，保留分站确认页。只打开服务端 verification_url，不拼域名、不因分站改变 API 地址；404/409 不自动回退主站。独立 Skills 可省略 app_key/site_code。用户在浏览器自行确认，不能替其批准。
